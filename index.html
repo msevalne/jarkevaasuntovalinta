@@ -1,0 +1,332 @@
+
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+  	<script src="jquery-1.11.1.js"></script>
+  	<script src="DomicRunner.js"></script>
+	<script src="ReittiopasParser.js"></script>
+    <script src="House.js"></script>
+	<script src="htmlGenerator.js"></script>
+	<script src="WebDomalyzer.js"></script>
+		
+    <title>Vertaa asunnot</title>
+	<meta http-equiv="pragma" content="no-cache">
+	<meta http-equiv="cache-control" content="no-cache">
+	<meta http-equiv="expires" content="0">    
+	<meta http-equiv="keywords" content="keyword1,keyword2,keyword3">
+	<meta http-equiv="description" content="This is my page">
+	
+	<link rel="stylesheet" type="text/css" href="styles.css">
+	
+  </head>
+  
+  <body bgcolor="#F1F1EA">
+	
+	<!-- -->
+	<h2 id="buyHousesLogo" onmouseover="if (mode == 'Vertaa vuokra-asuntoja') {$(this).css('text-decoration', 'underline');}" onmouseout="$(this).css('text-decoration', 'none');" onclick="changeMode($(this))">Vertaa omistusasuntoja</h2>
+	<h2 id="rentHousesLogo" onmouseover="if (mode == 'Vertaa omistusasuntoja') {$(this).css('text-decoration', 'underline');}" onmouseout="$(this).css('text-decoration', 'none');" onclick="changeMode($(this))" style="color: #BDBDBD; font-size: 100%;">Vertaa vuokra-asuntoja</h2>
+	
+	<table id="controllerTable" style="width:100%; border-collapse: collapse;" border="0">
+		<tr class="headerRow">
+			<th colspan="7">Ohjaustietoja</th>
+		</tr>
+		<tr>
+			<td style="border-bottom: 3px solid #000;">
+				<label>Asuntokoodeja</label>
+			</td>		
+			<td style="border-bottom: 3px solid #000;">
+				<label>Sijaintiparametrit</label>
+			</td>
+			<td style="border-bottom: 3px solid #000;">			
+				<label>Kriteerit</label>
+			</td>
+			<td style="border-bottom: 3px solid #000;">
+				<label>Kustannukset ja kertymt&#228;t</label>
+			</td>			
+		</tr>
+		<tr id="controlTableValues">
+			<td>	
+				<textarea id="houseCodesTextArea" rows="8" cols="10">
+				</textarea><br>
+				<button id="feedHouseCodes" type="button"
+					onclick="feedHouseCodes($('#houseCodesTextArea').val())">
+					Sy&#246;t&#228; koodit
+				</button>			
+			</td>		
+			<td>
+				<label>Osoite ty&#246;h&#246;n</label>
+				<br>
+				<input id="workingPlaceAddress" onchange="isLocationValid($(this));" type="text" value="Rautatieasema, Helsinki" style="padding: 0 3px; width: 160px"></input>
+				<br>
+				<label>Osoite harrastukseen</label>
+				<br>
+				<input id="hobbyPlaceAddress" onchange="isLocationValid($(this));" type="text" value="" style="padding: 0 3px; width: 160px"></input>				
+				<br>
+				<label>Ty&#246;h&#246;n tuloaika</label>
+				<br>
+				<input id="arrivalHour" onkeypress="return isNumberKey(event);" style="padding: 0 3px; width: 25px" maxlength="2" value="09"></input> HH 
+				<input id="arrivalMinutes" onkeypress="return isNumberKey(event);" style="padding: 0 3px; width: 25px" maxlength="2" value="00"></input> MM				
+				
+			</td>
+			<td>
+				<table id="criteriaTable" border="0">
+					<tr>
+						<th colspan="4">
+							<label id="criteriaWarn"></label>
+						</th>
+					</tr>
+					<tr class="buyHouseInfo">
+						<td>
+							<label>Hinta:</label>
+						</td>
+						<td>
+							<input id="priceMin" onchange="warnOnExistingHouses()" onkeypress="return isNumberKey(event);" style="padding: 0 3px; width: 45px" maxlength="4" value="130"> 000</input> - 
+						</td>
+						<td>
+							<input id="priceMax" onchange="warnOnExistingHouses()" onkeypress="return isNumberKey(event);" style="padding: 0 3px; width: 45px" maxlength="4" value="250"> 000</input> &euro;
+						</td>
+						<td>
+							<label id="priceStep"></label>
+						</td>										
+					</tr>
+					<tr>					
+						<td>
+							<label>Ty&#246;matkan kesto</label>
+						</td>
+						<td>
+							<input id="durationMin" onkeypress="return isNumberKey(event);" style="padding: 0 3px; width: 45px" maxlength="4" value="15"
+								onchange="warnOnExistingHouses(); $(this).parent().find('#durationHoursMin').text(Math.round($(this).val()/60*100)/100 + ' - ');"></input> - 
+							<br>
+							<label id="durationHoursMin">0.25 - </label>
+						</td>	
+						<td>
+							<input id="durationMax" onkeypress="return isNumberKey(event);" style="padding: 0 3px; width: 45px" maxlength="4" value="90"
+								onchange="warnOnExistingHouses(); $(this).parent().find('#durationHoursMax').text(Math.round($(this).val()/60*100)/100 + ' h');"></input> min
+							<br>
+							<label id="durationHoursMax">1.5 h</label>
+						</td>
+						<td>
+							<label id="durationStep"></label>
+						</td>					
+					</tr>
+					<tr>					
+						<td>
+							<label>Ty&#246;matkan pituus:</label>
+						</td>
+						<td>
+							<input id="distanceMin" onchange="warnOnExistingHouses()" onkeypress="return isNumberKey(event);" style="padding: 0 3px; width: 45px" maxlength="5" value="1000"></input> - 
+						</td>
+						<td>
+							<input id="distanceMax" onchange="warnOnExistingHouses()" onkeypress="return isNumberKey(event);" style="padding: 0 3px; width: 45px" maxlength="5" value="10000"></input> m
+						</td>
+						<td>
+							<label id="distanceStep"></label>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label>Yhti&#246;vastike:</label>
+						</td>
+						<td>
+							<input id="rentMin" onchange="warnOnExistingHouses()" onkeypress="return isNumberKey(event);" style="padding: 0 3px; width: 45px" maxlength="4" value="100"></input> - 
+						</td>
+						<td>
+							<input id="rentMax" onchange="warnOnExistingHouses()" onkeypress="return isNumberKey(event);" style="padding: 0 3px; width: 45px" maxlength="4" value="400"></input> &euro;
+						</td>
+						<td>
+							<label id="rentStep"></label>
+						</td>					
+					</tr>					
+					<tr>
+						<td>
+							<label>Koko:</label>
+						</td>
+						<td>
+							<input id="sizeMin" onchange="warnOnExistingHouses()" onkeypress="return isNumberKey(event);" style="padding: 0 3px; width: 45px" maxlength="4" value="30"></input> - 
+						</td>
+						<td>
+							<input id="sizeMax" onchange="warnOnExistingHouses()" onkeypress="return isNumberKey(event);" style="padding: 0 3px; width: 45px" maxlength="4" value="65"></input> m&sup2;
+						</td>
+						<td>
+							<label id="sizeStep"></label>
+						</td>										
+					</tr>
+					<tr class="buyHouseInfo">					
+						<td>
+							<label >Vuosi:</label>
+						</td>
+						<td>
+							<input id="yearMin" onchange="warnOnExistingHouses()" onkeypress="return isNumberKey(event);" style="padding: 0 3px; width: 45px" maxlength="4" value="1965"></input> - 
+						</td>
+						<td>
+							<input id="yearMax" onchange="warnOnExistingHouses()" onkeypress="return isNumberKey(event);" style="padding: 0 3px; width: 45px" maxlength="4" value="1995"></input>
+						</td>
+						<td>
+							<label id="yearStep"></label>
+						</td>	
+					</tr>					
+					<tr>
+						<th id="criteriaWarn" colspan="4">
+							<button id="showMinsMaxs" type="button" 
+								onclick="showMinsMaxs()">
+								N&#228;yt&#228; minimit ja maksimit
+							</button>	
+						</th>
+					</tr>									
+				</table>
+			</td>
+			<td>
+				<label>Laske kertyneet menot</label>
+				<br>
+				<input id="yearLivedExpensions" onkeypress="return isNumberKey(event);" style="padding: 0 3px; width: 30px" maxlength="2" value="5"></input>
+				<label>:n vuoden aikana.</label>
+				<br>
+				<label>Ajan hinta: </label>
+				<input id="timePrice" onkeypress="return isNumberKey(event);" style="padding: 0 3px; width: 30px" maxlength="3" value="20"></input> &euro; / tunti
+				
+				<br>
+				<button id="showLivedExpensions" type="button" value="0"
+					onclick="showLivedExpensions();">N&#228;yt&#228; menot</button>			
+			</td>
+		</tr>
+	</table>
+	<br>
+	<table id="houseHandleTable" style="width:100%;" bgcolor="white">
+		<tr class="headerRow">
+			<th colspan="10">Asunnon tietoja</th>
+			<th colspan="7" style="padding-left: 2cm;">Asunnon vertaustietoja</th>
+		</tr>
+		<tr id="rowHeader">
+			<td>
+			</td>
+			<td>
+				<label id="codeHeader">koodi</label>
+			</td>
+			<td>			
+				<label id="priceHeader" class="buyHouseInfo">hinta (&euro;)</label>
+			</td>	
+			<td>
+				<label id="locationHeader">osoite</label>
+			</td>	
+			<td>
+				<label id="districtHeader">kortteli</label>
+			</td>	
+			<td>
+				<label id="durationHeader">kesto (min.)</label>
+			</td>			
+			<td>
+				<label id="distanceHeader">pituus (m.)</label>
+			</td>			
+			<td>
+				<label id="rentHeader">vuokra (&euro;)</label>
+			</td>	
+			<td>
+				<label id="sizeHeader">koko (m&sup2)</label>
+			</td>	
+			<td>
+				<label id="yearHeader" class="buyHouseInfo">vuosi</label>
+			</td>	
+			<!--<td>
+				<label id="conditionRankHeader">kunto</label>
+			</td>-->
+			<td>
+				<label id="priceRankHeader" class="buyHouseInfo" value="price rank"
+					onmouseover="if ($(this).css('font-weight') == 400) {$(this).css('text-decoration', 'underline');}" 
+					onmouseout="$(this).css('text-decoration', 'none');" onclick="sortByParameter($(this))">hinta</label>
+			</td>	
+			<td>
+				<label id="locationDurationRankHeader" value="duration rank"
+					onmouseover="if ($(this).css('font-weight') == 400) {$(this).css('text-decoration', 'underline');}" 
+					onmouseout="$(this).css('text-decoration', 'none');" onclick="sortByParameter($(this))">kesto</label>
+			</td>
+			<td>
+				<label id="locationDistanceRankHeader" value="distance rank"
+					onmouseover="if ($(this).css('font-weight') == 400) {$(this).css('text-decoration', 'underline');}" 
+					onmouseout="$(this).css('text-decoration', 'none');" onclick="sortByParameter($(this))">pituus</label>
+			</td>			
+			<td>
+				<label id="rentRankHeader" value="rent rank"
+					onmouseover="if ($(this).css('font-weight') == 400) {$(this).css('text-decoration', 'underline');}" 
+					onmouseout="$(this).css('text-decoration', 'none');" onclick="sortByParameter($(this))">vuokra</label>
+			</td>	
+			<td>
+				<label id="sizeRankHeader" value="size rank"
+					onmouseover="if ($(this).css('font-weight') == 400) {$(this).css('text-decoration', 'underline');}" 
+					onmouseout="$(this).css('text-decoration', 'none');" onclick="sortByParameter($(this))">koko</label>
+			</td>	
+			<td>
+				<label id="yearRankHeader" class="buyHouseInfo" value="year rank"
+					onmouseover="if ($(this).css('font-weight') == 400) {$(this).css('text-decoration', 'underline');}" 
+					onmouseout="$(this).css('text-decoration', 'none');" onclick="sortByParameter($(this))">vuosi</label>
+			</td>	
+			<!--<td>
+				<label id="conditionRankHeader" style="border: none; padding: 0 3px;" value="condition rank"
+					onmouseover="if ($(this).css('font-weight') == 400) {$(this).css('text-decoration', 'underline');}" 
+					onmouseout="$(this).css('text-decoration', 'none');" onclick="sortByParameter($(this))">kunto</label>				
+			</td>-->
+			<td>
+				<label id="totalHeader" value="total rank"
+					onmouseover="if ($(this).css('font-weight') == 400) {$(this).css('text-decoration', 'underline');}" 
+					onmouseout="$(this).css('text-decoration', 'none');" onclick="sortByParameter($(this))">yhteispisteet</label>
+			</td>
+		</tr>	
+	</table>
+	
+	<br>
+	
+	<table id="houseComparisionTable" class="buyHouseInfo" style="width:100%; border-collapse: collapse;" bgcolor="white">
+		<tr class="headerRow">
+			<th colspan="10">Vertaa asuntojen kustannukset ja investoinnit</th>
+		</tr>
+		<tr id="rowHeader">
+			<td>
+				<label>koodi</label>
+			</td>
+			<td>
+				<label>hintaero</label>
+			</td>
+			<td>
+				<label>matka-aikaero</label>
+			</td>
+			<td>
+				<label>vuokraero</label>
+			</td>			
+			<td>
+				<label>kokoero</label>
+				<br>
+				<input id="squareMeterInvestments" onchange="compareTwoHouses()" onkeypress="return isNumberKey(event);" style="padding: 0 3px; width: 50px" maxlength="4" value="3000"> &euro; / m&sup2 </input>
+			</td>
+			<td>
+				<label>ik&#228;ero</label>
+				<br>
+				putkiremontin hinta: <input onchange="compareTwoHouses()" id="squareMeterPipeRepairPrice" onkeypress="return isNumberKey(event);" style="padding: 0 3px; width: 50px" maxlength="4" value="1200"> &euro; / m&sup2 </input>
+			</td>
+			<td>
+				<label>yhteens&#228;</label>
+			</td>			
+		</tr>
+	</table>
+	
+	<p>
+		<button id="add" type="button"
+			onclick="addHouseRow($('#houseHandleTable tr:last'))">
+			Lis&#228;&#228;
+		</button>
+		<button id="removeAll" type="button" 
+			onclick="removeAll()">
+			Poista kaikki
+		</button>
+		<button id="recalculate" type="button" 
+			onclick="recalculate()">
+			Laske kohteet uudestaan
+		</button>
+		<button id="compareTwoHouses" class="buyHouseInfo" type="button" 
+			onclick="compareTwoHouses()">
+			Vertaa kaksi asuntoa
+		</button>
+		
+	</p>
+    
+  </body>
+</html>
